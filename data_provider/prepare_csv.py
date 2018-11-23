@@ -4,7 +4,6 @@ import sys
 
 class CsvObject:
 	"""CsvObject"""
-
 	def __init__(self, path, name = 'label', label_dict = None):
 		self.path = path
 		self.name = name
@@ -66,6 +65,11 @@ def write_csv(samples, csv_path, data_path = '', delimiter = ',', header = None)
 	count = 0
 	for s in samples:
 		line = data_path + s[0]
+
+		if os.path.isfile(line) == False:
+			print('write_csv<warning>: File', line, 'not found and will be skipped!')
+			continue
+
 		for label in s[1]:
 			line += delimiter + str(label[0])
 		dst_csv.write(line + '\n')
@@ -92,7 +96,7 @@ def main():
       
 	samples, rejected = merge_csv(csv_objs)
 	header = generate_header(csv_objs)
-	count = write_csv(samples, '/home/darkalert/MirrorJob/Datasets/Processed/hairs-v2/hair-2018-09-23/hair-attr5.csv',
+	count = write_csv(samples, '/home/darkalert/MirrorJob/Datasets/Processed/hairs-v2/hair-2018-09-23/hair-attr5-full.csv',
 		              '/home/darkalert/Desktop/face_prod/normalized/2018-09-23/', header = header)
 	print('accepted samples:', len(samples), ', rejected:', len(rejected))
 	print('recorded samples:', count, ', skipped:', len(samples) - count)
