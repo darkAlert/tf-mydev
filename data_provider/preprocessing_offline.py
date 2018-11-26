@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import cv2
-import prepare_csv as csv
+import data_provider.prepare_csv as prepare_csv
 
 
 def norm_face(img, pts, crop_type='default', max_size=500):
@@ -115,7 +115,7 @@ def preprocess(path, points = None, color = 'bgr', crop = None, size = None):
 
 def preprocess_from_pickle(pickle_path, src_dir, dst_dir, color = 'bgr', crop = None, size = None):
 	"""Read paths and labels from pickle-file and preprocess them"""
-	paths, labels = csv.parse_pickle(pickle_path)
+	paths, labels = prepare_csv.parse_pickle(pickle_path)
 	assert len(paths) == len(labels)
 
 	if os.path.exists(dst_dir) == False:
