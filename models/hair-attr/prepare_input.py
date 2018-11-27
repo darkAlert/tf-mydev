@@ -43,8 +43,12 @@ def input():
 	#Pack images and labels to records:
 
 
+def test():
+	paths, labels, header = csv.parse_csv('/home/darkalert/MirrorJob/Datasets/Processed/hairs-v2/hair-2018-09-23/hair-attr5-full.csv')
+
 
 if __name__ == '__main__':
-	print('Run preprocessing...')
-	input()
-	print('All done.')
+	# print('Run preprocessing...')
+	# input()
+	# print('All done.')
+	test()

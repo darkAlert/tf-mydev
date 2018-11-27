@@ -98,28 +98,17 @@ def parse_pickle(pickle_path):
 	return paths, labels
 
 
+def parse_csv(csv_path, delimiter = ','):
+	"""Extract paths and labels from csv-file"""
+	lines = [line.rstrip('\n')for line in open(csv_path)]
+	header = ''
+	if lines[0][0] == '#':
+		header = lines[0]
+		lines = [line.split(delimiter) for line in lines[1:-1]]  # skip header
+	else:
+		lines = [line.split(delimiter) for line in lines]
 
-def main():
-	csv_objs = []
-	csv_objs.append(CsvObject('/home/darkalert/MirrorJob/Datasets/Processed/hairs-v2/hair-2018-09-23/result-from-toloka/fixing.csv',
-							  name = 'fixing', label_dict = {0:'no', 1:'yes'}))
-	csv_objs.append(CsvObject('/home/darkalert/MirrorJob/Datasets/Processed/hairs-v2/hair-2018-09-23/result-from-toloka/fringe.csv',
-							  name = 'fringe', label_dict = {0:'no', 1:'yes'}))
-	csv_objs.append(CsvObject('/home/darkalert/MirrorJob/Datasets/Processed/hairs-v2/hair-2018-09-23/result-from-toloka/length.csv',
-							  name = 'length', label_dict = {0:'bald', 1:'one_cm', 2:'short', 3:'long'}))
-	csv_objs.append(CsvObject('/home/darkalert/MirrorJob/Datasets/Processed/hairs-v2/hair-2018-09-23/result-from-toloka/parting.csv',
-							  name = 'parting', label_dict = {0:'none', 1:'side', 2:'centre'}))
-	csv_objs.append(CsvObject('/home/darkalert/MirrorJob/Datasets/Processed/hairs-v2/hair-2018-09-23/result-from-toloka/srtucture.csv',
-							  name = 'srtucture', label_dict = {0:'curls', 1:'dreadlocks', 2:'other'}))
-	  
-	samples, rejected = merge_csv(csv_objs)
-	header = generate_header(csv_objs)
-	count = write_csv(samples, 
-		              csv_path = '/home/darkalert/MirrorJob/Datasets/Processed/hairs-v2/hair-2018-09-23/hair-attr5-full.csv',
-					  data_path = '/home/darkalert/MirrorJob/Datasets/Processed/hairs-v2/hair-2018-09-23/data/',
-					  header = header)
-	print('accepted samples:', len(samples), ', rejected:', len(rejected))
-	print('recorded samples:', count, ', skipped:', len(samples) - count)
-
-if __name__ == '__main__':
-	main()
+	paths = [line[0] for line in lines]
+	labels = [line[1:] for line in lines]
+	
+	return paths, labels, header
