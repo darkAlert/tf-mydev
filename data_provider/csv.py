@@ -22,21 +22,29 @@ def merge_csv(csv_objs, delimiter = ';'):
 		assert len(lines) > 0 and len(lines[0]) > 1
 		for l in lines:
 			if l[0] in samples:
-				samples[l[0]].append([l[i] for i in range(1,len(l))])
+				s = [l[i] for i in range(1,len(l))]
+				samples[l[0]] = samples[l[0]] + s
 			else:
-				samples[l[0]] = [[l[i] for i in range(1,len(l))]]	
+				samples[l[0]] = [l[i] for i in range(1,len(l))]	
 
-	#Accept a sample if it has a completed label, and reject one otherwise:
+	#Split the samples into a paths and labels, and reject those ones if a label is uncompleted:
 	num_labels = len(csv_objs)
-	accepted = []
-	rejected = []
+	paths = []
+	labels = []
+	rejected_paths = []
+	rejected_labels = []
 	for key in samples:
 		if len(samples[key]) == num_labels:
-			accepted.append([key, samples[key]])
+			paths.append(key)
+			labels.append(samples[key])
 		else:
-			rejected.append([key, samples[key]])
+			rejected_paths.append(key)
+			rejected_labels.append(samples[key])
 
-	return accepted, rejected
+	assert len(paths) == len(labels)
+	assert len(rejected_paths) == len(rejected_labels)
+
+	return paths, labels, [rejected_paths, rejected_labels]
 
 
 def generate_header(csv_objs):
@@ -56,23 +64,25 @@ def generate_header(csv_objs):
 	return header
 
 
-def write_csv(samples, csv_path, data_path = '', delimiter = ',', header = None):
+def write_csv(paths, labels, dst_path, data_path_prefix = '', delimiter = ',', header = None):
 	"""Write samples to csv-file"""
-	dst_csv = open(csv_path,'w')
-	
+	assert len(paths) == len(labels)
+
+	dst_csv = open(dst_path, 'w')
 	if header is not None:
 		dst_csv.write(header + '\n')
 	
 	count = 0
-	for s in samples:
-		line = data_path + s[0]
+	for i in range(len(paths)):
+		line = data_path_prefix + paths[i]
 
 		if os.path.isfile(line) == False:
 			print('write_csv<warning>: File', line, 'not found and will be skipped!')
 			continue
 
-		for label in s[1]:
-			line += delimiter + str(label[0])
+		for l in labels[i]:
+			line += delimiter + str(l)
+
 		dst_csv.write(line + '\n')
 		count += 1
 
@@ -95,16 +105,18 @@ def parse_pickle(pickle_path):
 			label.append(l)
 		labels.append(label)
 
+	assert len(paths) == len(labels)
+
 	return paths, labels
 
 
 def parse_csv(csv_path, delimiter = ','):
-	"""Extract paths and labels from csv-file"""
+	"""Extract paths and labels (and header) from csv-file"""
 	lines = [line.rstrip('\n')for line in open(csv_path)]
 	header = ''
 	if lines[0][0] == '#':
 		header = lines[0]
-		lines = [line.split(delimiter) for line in lines[1:-1]]  # skip header
+		lines = [line.split(delimiter) for line in lines[1:]]  # skip header
 	else:
 		lines = [line.split(delimiter) for line in lines]
 

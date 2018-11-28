@@ -1,10 +1,10 @@
 import os
+import sys
 import numpy as np
 import cv2
-import data_provider.prepare_csv as prepare_csv
 
 
-def norm_face(img, pts, crop_type='default', max_size=500):
+def _norm_face(img, pts, crop_type='default', max_size=500):
 	if len(pts) > 2:
 		pts = [pts[36], pts[45]]
 	pts = np.array(pts)
@@ -70,7 +70,7 @@ def norm_face(img, pts, crop_type='default', max_size=500):
 	return cv2.warpAffine(img, M, (target_size_w, target_size_h)), M
 
 
-def preprocess(path, points = None, color = 'bgr', crop = None, size = None):
+def transform_image(path, points = None, color = 'bgr', crop = None, size = None):
 	"""Preprocess image by normalization, cropping, color and size"""
 	invert_color = False
 	if color == 'bgr':
@@ -94,7 +94,7 @@ def preprocess(path, points = None, color = 'bgr', crop = None, size = None):
 	if crop is not None:
 		assert points is not None
 		pts = [points[i:i+2] for i in range(0, len(points), 2)]
-		norm_face(img, pts, crop_type = crop)
+		_norm_face(img, pts, crop_type = crop)
 
 	#Resize:
 	actual_size = (img.shape[1], img.shape[0])
@@ -113,29 +113,39 @@ def preprocess(path, points = None, color = 'bgr', crop = None, size = None):
 
 
 
-def preprocess_from_pickle(pickle_path, src_dir, dst_dir, color = 'bgr', crop = None, size = None):
-	"""Read paths and labels from pickle-file and preprocess them"""
-	paths, labels = prepare_csv.parse_pickle(pickle_path)
-	assert len(paths) == len(labels)
-
+def preprocess(paths, labels, src_dir, dst_dir, color = 'bgr', crop = None, size = None):
+	"""Preprocess the dataset (paths and labels) and save it to disk"""
 	if os.path.exists(dst_dir) == False:
 		os.makedirs(dst_dir)
 
 	#Load, preprocess and save image:
 	for i in range(len(paths)):
-		print('Processing', paths[i])
+		# print('Processing', paths[i])
 		src_path = src_dir + paths[i]
-		img = preprocess(src_path, labels[i], color = color, crop = crop, size = size)
+		img = transform_image(src_path, labels[i], color = color, crop = crop, size = size)
 
 		dst_path = dst_dir + paths[i]
 		cv2.imwrite(dst_path, img)
 
+		if not i % 1000:
+			print('Preprocess: {}/{}'.format(i, len(paths)))
+			sys.stdout.flush()
+	sys.stdout.flush()
+
 	return len(paths)
 
 
-if __name__ == '__main__':
-	count = preprocess_from_pickle('/home/darkalert/Desktop/face_prod/normalized/2018-09-23/landmarks68p.pickle',
-				                   src_dir = '/home/darkalert/Desktop/face_prod/normalized/2018-09-23/',
-				                   dst_dir = '/home/darkalert/MirrorJob/Datasets/Processed/hairs-v2/hair-2018-09-23/data/',
-				                   color = 'bgr', crop = 'head', size = (160, 200))
-	print('Done. Total images:', count)
+def split(paths, labels, ratio = 0.5):
+	"""Split the paths and labels on two parts with ratio 1-target_ratio 
+	and ratio respectively (e.g. train and test data)"""
+	assert len(paths) == len(labels)
+	assert ratio > 0.0 and ratio < 1.0
+	n = len(paths)
+	i = int(round(n*ratio))
+	paths1 = paths[0:i]
+	labels1 = labels[0:i]
+	paths2 = paths[i:n]
+	labels2 = labels[i:n]
+
+	return paths1, labels1, paths2, labels2
+	
