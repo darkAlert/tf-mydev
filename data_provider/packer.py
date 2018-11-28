@@ -1,9 +1,10 @@
 import tensorflow as tf
-import cv2
 import sys
 
 
 def _int64_feature(value):
+	if not isinstance(value, list):
+		value = [value]
 	return tf.train.Feature(int64_list=tf.train.Int64List(value=value))
 
 def _bytes_feature(value):
@@ -25,8 +26,10 @@ def pack_to_tfrecord(paths, labels, dst_path):
 			label = list(map(int, labels[i]))
 
 			#Create a feature:
-			feature = {'image': _bytes_feature(img),
-					   'label': _int64_feature(label)}
+			feature = {
+				'image': _bytes_feature(tf.compat.as_bytes(img)),
+				'label': _int64_feature(label)
+			}
 
 			#Create an example protocol buffer
 			example = tf.train.Example(features=tf.train.Features(feature=feature))
